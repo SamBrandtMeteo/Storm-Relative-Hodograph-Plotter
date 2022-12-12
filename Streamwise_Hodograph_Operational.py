@@ -750,6 +750,10 @@ for i in range(0,4):
 # Shear magnitude title
 ax.text(-17.5,-23.5,'Shear Magnitude (1/s)',fontsize=4,color=colors[1],ha='center')
 
+# 0-500m mean streamwise vorticity 
+ax.text(-21.5,25.5,'0-500 Meter Mean\nStreamwise Vorticity:',fontsize=4,color=colors[1],ha='center')
+ax.text(-21.5,22.5,str(round(np.mean(strmw[0:5]),3))+' $s^{-1}$',fontsize=6,color=colors[1],ha='center')
+
 # Streamwise colorbar
 sm = plt.cm.ScalarMappable(cmap=cmap,norm=plt.Normalize(vmin=0,vmax=1))
 cbar=plt.colorbar(sm,orientation='horizontal',shrink=0.5,pad=0.03)
