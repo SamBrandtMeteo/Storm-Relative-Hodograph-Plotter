@@ -39,18 +39,18 @@ datasource='vad' # Real-time radar-derived vertical wind profiles
 #datasource='csv' # Data from .csv file on local Machine
 
 if datasource=='vad':
-    rid='kpoe' # String or list of strings of radar IDs
+    rid='ksfx' # String or list of strings of radar IDs
     weights=[0.2,0.8] # Weights used to average multiple radar sites
                         # WEIGHTS MUST ADD UP TO ONE
-    scans=6 # Number of recent scans to average. Recommended to choose the
+    scans=10 # Number of recent scans to average. Recommended to choose the
              # smallest number that yields a "smoother" looking hodograph
              
 if datasource=='Manual':
     # {u,v,z} must be in standard SI units of {m/s,m/s,m} respectively
-    u=np.array([-1.5,-1.5,2,7,15,22,44,70,85])/1.944
-    v=np.array([10,32,37.5,39,38,35,31,26,28])/1.944
-    z=np.array([0,500,750,1000,2000,3000,6000,9000,16000])
-    titletext='Sample Manual Input' # Text to display as the plot title
+    u=np.array([-1.5,2.5,8,18,32.5,38,47.5,0])/1.944
+    v=np.array([11.5,30,35.5,38.5,34,29,27,0])/1.944
+    z=np.array([0,333,500,1000,4000,5000,6000,7000])
+    titletext='CAM Composite (Manual Input)' # Text to display as the plot title
     
 if datasource=='csv':
     path='Your directory here/'
@@ -64,8 +64,8 @@ if datasource=='csv':
 # Custom Surface wind
 # Adding a custom surface wind based on observations is highly recommended
 custom_sfc_wind=False # Set to true to include a custom surface wind
-directionsfc=135 # Direction measured counterclockwise from East, in degrees
-speedsfc=2 # Speed in meters per second
+directionsfc=120 # Direction measured counterclockwise from East, in degrees
+speedsfc=7.7 # Speed in meters per second
 
 # Storm motion
 move='right' # Right-moving supercell motion (via Bunkers et al. 2000)
@@ -74,7 +74,7 @@ move='right' # Right-moving supercell motion (via Bunkers et al. 2000)
 #move='observed' # Custom storm motion
 
 if move=='mean':
-    maxsteer=6000 # Maximum height used to calculate mean wind (meters)
+    maxsteer=4000 # Maximum height used to calculate mean wind (meters)
                   # 6000 is default following Bunkers et al. 2000
     
 if move=='observed':
@@ -100,7 +100,7 @@ resolution=100 # Resolution to which the sounding will be interpolated (in m)
 ###############################################################################  
 
 # Output #          
-path='Your directory here/' # Directory to run the script in. This is also the
+#path='Your directory here/' # Directory to run the script in. This is also the
                            # directory that the images will be saved to
 
 ###############################################################################
@@ -668,6 +668,13 @@ elif colscheme=='colorblind':
 
 ###############################################################################
 
+nontorfactor=np.array([1.5,1.4,1.4,1.3,1.2,1.2,1.,1.,0.9,0.9,0.8,0.7,0.6,0.6,0.6,0.6,0.5,0.4,0.5,0.5])
+wktorfactor=np.array([0.6,0.7,0.6,0.7,0.8,0.9,1.1,1.,1.1,1.1,1.2,1.3,1.3,1.3,1.3,1.2,1.2,1.4,1.1,1.3])
+sigtorfactor=np.array([0.2,0.1,0.2,0.3,0.4,0.4,0.6,0.7,0.8,1.1,1.3,1.5,1.7,2.,2.,2.6,3.2,3.1,3.4,3.2])
+bins=np.arange(0,0.040,0.002)
+
+
+###############################################################################  
 # Plot #
 
 # Define axis
@@ -748,11 +755,35 @@ for i in range(0,4):
     ax.text(-25+5*i,-28,str(0.01+0.01*i),fontsize=3,color=colors[1],ha='center',va='top')  
 
 # Shear magnitude title
-ax.text(-17.5,-23.5,'Shear Magnitude (1/s)',fontsize=4,color=colors[1],ha='center')
+ax.text(-17.5,-23.5,'Shear Magnitude ($s^{-1}$)',fontsize=4,color=colors[1],ha='center')
 
 # 0-500m mean streamwise vorticity 
-ax.text(-21.5,25.5,'0-500 Meter Mean\nStreamwise Vorticity:',fontsize=4,color=colors[1],ha='center')
-ax.text(-21.5,22.5,str(round(np.mean(strmw[0:5]),3))+' $s^{-1}$',fontsize=6,color=colors[1],ha='center')
+omega_mean=round(np.mean(strmw[0:5]),3)
+ax.text(-23,27,'0-500 Meter Mean\nStreamwise Vorticity:',fontsize=3,color=colors[1],ha='center')
+ax.text(-23,24.5,str(omega_mean)+' $s^{-1}$',fontsize=5,color=colors[1],ha='center')
+
+
+ax.text(29,29,'Supercell Tornado\nLiklihood Relative to\nHistorical Dataset:',fontsize=3,color=colors[1],ha='right',va='top')
+ax.text(25,24.4,'NonTor:',fontsize=3,color=colors[1],ha='right',va='center')
+nontordigit=nontorfactor[np.digitize([omega_mean],bins)[0]]
+if nontordigit<1:
+    ax.text(29,24.4,str(nontordigit)+'x',fontsize=5,color=cmap(nontordigit-0.5),ha='right',va='center')
+elif nontordigit>=1:
+    ax.text(29,24.4,str(nontordigit)+'x',fontsize=5,color=cmap(0.5*nontordigit),ha='right',va='center')
+    
+ax.text(25,22.4,'WeakTor:',fontsize=3,color=colors[1],ha='right',va='center')
+wktordigit=wktorfactor[np.digitize([omega_mean],bins)[0]]
+if wktordigit<1:
+    ax.text(29,22.4,str(wktordigit)+'x',fontsize=5,color=cmap(wktordigit-0.5),ha='right',va='center')
+elif wktordigit>=1:
+    ax.text(29,22.4,str(wktordigit)+'x',fontsize=5,color=cmap(0.5*wktordigit),ha='right',va='center')
+    
+ax.text(25,20.4,'SigTor:',fontsize=3,color=colors[1],ha='right',va='center')
+sigtordigit=sigtorfactor[np.digitize([omega_mean],bins)[0]]
+if sigtordigit<1:
+    ax.text(29,20.4,str(sigtordigit)+'x',fontsize=5,color=cmap(sigtordigit-0.5),ha='right',va='center')
+elif wktordigit>=1:
+    ax.text(29,20.4,str(sigtordigit)+'x',fontsize=5,color=cmap(0.5*sigtordigit),ha='right',va='center')
 
 # Streamwise colorbar
 sm = plt.cm.ScalarMappable(cmap=cmap,norm=plt.Normalize(vmin=0,vmax=1))
@@ -764,12 +795,12 @@ cbar.outline.set_visible(False)
 cbar.ax.tick_params(color=colors[1])
 
 # Title
-ax.text(29,-29,'Developed by Sam Brandt (GitHub: SamBrandtMeteo)',fontsize=2,color=colors[1],va='center',ha='right')
+ax.text(29,-28.5,'Developed by Sam Brandt (GitHub: SamBrandtMeteo)\nHistorical Dataset (2003-2017) Courtesy of SPC and Brice Coffer',fontsize=2,color=colors[1],va='center',ha='right')
 ax.set_title('Storm-Relative Hodograph\n'+titletext,color=colors[1],fontsize=7)
 
 # Output
 plt.show()
-plt.savefig(path+'storm_relative_hodograph.png')
+#plt.savefig(path+'storm_relative_hodograph.png')
 
 ###############################################################################
 
